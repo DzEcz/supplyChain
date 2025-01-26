@@ -1,126 +1,119 @@
 Attribute VB_Name = "Module1"
 Sub AnaProsedur()
-        ' Optimizasyonları kapat
-    Application.ScreenUpdating = False
-    Application.Calculation = xlCalculationManual
-    Application.EnableEvents = False
-    
-    On Error GoTo HataYakalama ' Hata yakalama
-    
+    ' Optimizasyonlar� kapat
+    OptimizeOperations False
+
+    ' Hata yakalama
+    On Error GoTo HataYakalama
+
     Dim currentSheet As Worksheet
-    
-    ' Mevcut aktif sayfayı belirle
     Set currentSheet = ActiveSheet
-    
-    ' UserForm'u göster
+
+    ' UserForm'u g�ster
     UserForm1.Show vbModeless
-    UserForm1.Caption = "İlerleme Durumu"
-    DoEvents ' UserForm'un güncellenmesini sağlar
-    
-    ' Tüm düğmeleri pasif yap
+    UserForm1.Caption = "�lerleme Durumu"
+    DoEvents
+
+    ' T�m d��meleri pasif yap
     UserForm1.CommandButton1.Enabled = False
     UserForm1.CommandButton2.Enabled = False
     UserForm1.CommandButton3.Enabled = False
-    
-    ' Hesap sayfasının kilidini aç
-    Sheets("Hesap").Unprotect Password:="8142" ' Şifreyi kendi belirlediğiniz şifre ile değiştirin
-    Sheets("Pusula").Unprotect Password:="8142" ' Şifreyi kendi belirlediğiniz şifre ile değiştirin
-    
-    ' İşlemleri gerçekleştir
+
+    ' Hesap sayfas�n�n kilidini a�
+    Sheets("Hesap").Unprotect Password:="8142"
+    Sheets("Pusula").Unprotect Password:="8142"
+
+    ' ��lemleri ger�ekle�tir
     Call Adshow
-    DoEvents
+    GuncelleIlerleme 1
     Call PusulaSayfasiniGuncelle
-    DoEvents
+    GuncelleIlerleme 2
     Call VeriKopyala
-    DoEvents
+    GuncelleIlerleme 3
     Call KopyalaVeEkleHizli
-    DoEvents
+    GuncelleIlerleme 4
     Call KutuMiktarKopyala
-    DoEvents
+    GuncelleIlerleme 5
     Call EsdegerToplam
-    DoEvents
+    GuncelleIlerleme 6
     Call DinamikSirala
-    DoEvents
+    GuncelleIlerleme 7
     Call KopyalaHastaneleri
-    DoEvents
+    GuncelleIlerleme 8
     Call UpdateDepoDurumu
-    DoEvents
+    GuncelleIlerleme 9
     Call PivotTabloyuYenile
-    DoEvents
-    
-    ' İşlemler tamamlandığında bildirim ekle
-    UserForm1.ListBox.AddItem "Tüm işlemler başarıyla gerçekleşti."
-    
-    ' Hesap sayfasını tekrar kilitle
-    Sheets("Hesap").Protect Password:="8142" ' Şifreyi kendi belirlediğiniz şifre ile değiştirin
-    Sheets("Pusula").Protect Password:="8142" ' Şifreyi kendi belirlediğiniz şifre ile değiştirin
-    
-    ' Başlatılan sayfaya geri dön
+    GuncelleIlerleme 10
+
+    ' ��lemler tamamland���nda bildirim ekle
+    UserForm1.ListBox.AddItem "T�m i�lemler ba�ar�yla ger�ekle�ti."
+
+    ' Hesap sayfas�n� tekrar kilitle
+    Sheets("Hesap").Protect Password:="8142"
+    Sheets("Pusula").Protect Password:="8142"
+
+    ' Ba�lat�lan sayfaya geri d�n
     currentSheet.Activate
-    
+
     ' Kapatma butonunu aktif yap
     UserForm1.CommandButton1.Enabled = True
     UserForm1.CommandButton3.Enabled = True
 
+    ' Optimizasyonlar� a�
+    OptimizeOperations True
     Exit Sub
 
 HataYakalama:
-    ' Hata durumunda UserForm'u gizle ve hata mesajını göster
-    MsgBox "Bir hata oluştu: " & Err.Description & vbCrLf & _
-           "Prosedür: " & Err.Source & vbCrLf & _
-           "Satır: " & Erl, vbCritical
-           
-    ' Optimizasyonları aç
-    Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
-    Application.EnableEvents = True
+    ' Hata durumunda UserForm'u gizle ve hata mesaj�n� g�ster
+    MsgBox "Bir hata olu�tu: " & Err.Description & vbCrLf & _
+           "Prosed�r: " & Err.Source & vbCrLf & _
+           "Sat�r: " & Erl, vbCritical
+
+    ' Optimizasyonlar� a�
+    OptimizeOperations True
 End Sub
 
+Sub OptimizeOperations(state As Boolean)
+    Application.ScreenUpdating = state
+    Application.Calculation = IIf(state, xlCalculationAutomatic, xlCalculationManual)
+    Application.EnableEvents = state
+End Sub
+
+Sub GuncelleIlerleme(adim As Integer)
+    With UserForm1.ProgressBar
+        .Width = adim * (UserForm1.Frame1.Width / 10) ' Her ad�m Frame1'in geni�li�inin 1/10'u kadar
+    End With
+    DoEvents ' G�ncellemelerin anl�k olarak g�r�lmesini sa�lar
+End Sub
 
 Sub Adshow()
     Application.StatusBar = "Ecz. Harun Topal"
 End Sub
 
 Sub PusulaSayfasiniGuncelle()
-
-UserForm1.ListBox.AddItem "Pusula sayfası güncelleme işlemi başladı."
+    UserForm1.ListBox.AddItem "Pusula sayfas� g�ncelleme i�lemi ba�lad�."
     Dim kaynakKitap As Workbook
     Dim hedefKitap As Workbook
     Dim kaynakSayfa As Worksheet
     Dim hedefSayfa As Worksheet
     Dim kaynakDosyaYolu As String
-    
-    ' Kaynak dosya yolunu belirleyin
+
     kaynakDosyaYolu = ThisWorkbook.Path & "\Pusula.xlsx"
-    
-    ' Kaynak çalışma kitabını açın
     Set kaynakKitap = Workbooks.Open(kaynakDosyaYolu)
     Set kaynakSayfa = kaynakKitap.Sheets("Sheet")
-    
-    ' Hedef çalışma kitabını ve sayfasını belirleyin
     Set hedefKitap = ThisWorkbook
     Set hedefSayfa = hedefKitap.Sheets("Pusula")
-    
-    ' Hedef sayfadaki mevcut verileri temizleyin
+
     hedefSayfa.Cells.Clear
-    
-    ' Kaynak sayfadaki verileri kopyalayın
     kaynakSayfa.UsedRange.Copy
-    
-    ' Verileri hedef sayfaya yapıştırın
     hedefSayfa.Range("A1").PasteSpecial Paste:=xlPasteValues
-    
-    ' Kaynak çalışma kitabını kapatın
     kaynakKitap.Close False
-    
-    ' Kullanıcıya bildirimde bulunun
-UserForm1.ListBox.AddItem "Pusula sayfasıgüncelleme işlemi tamamlandı."
+
+    UserForm1.ListBox.AddItem "Pusula sayfas� g�ncelleme i�lemi tamamland�."
 End Sub
 
 Sub VeriKopyala()
-
-UserForm1.ListBox.AddItem "Pusula sayfasından veri kopyalama işlemi başladı."
-   
+    UserForm1.ListBox.AddItem "Pusula sayfas�ndan veri kopyalama i�lemi ba�lad�."
     Dim wsPusula As Worksheet
     Dim wsHesap As Worksheet
     Dim lastRow As Long
@@ -129,62 +122,47 @@ UserForm1.ListBox.AddItem "Pusula sayfasından veri kopyalama işlemi başladı.
     Dim miktarCol As Long
     Dim kodData As Variant
     Dim i As Long
-    
-    ' Çalışma sayfalarını tanımla
+
     Set wsPusula = ThisWorkbook.Sheets("Pusula")
     Set wsHesap = ThisWorkbook.Sheets("Hesap")
-    
-    ' Pusula sayfasındaki son satırı bul
     lastRow = wsPusula.Cells(wsPusula.Rows.count, "A").End(xlUp).row
-    
-    ' Pusula sayfasında veri olup olmadığını kontrol et
+
     If lastRow < 2 Then
-        MsgBox "Lütfen Pusuladan çektiğiniz stok durum raporunu aynı klasöre kopyalayınız!", vbExclamation
+        MsgBox "L�tfen Pusuladan �ekti�iniz stok durum raporunu ayn� klas�re kopyalay�n�z!", vbExclamation
         wsPusula.Activate
-        Application.ScreenUpdating = True
-        Application.Calculation = xlCalculationAutomatic
+        OptimizeOperations True
         Exit Sub
     End If
-    
-    ' Hesap sayfasındaki verileri kontrol et ve gerekirse sil
+
     If wsHesap.Cells(2, 1).value <> "" Then
         wsHesap.Rows("2:" & wsHesap.Rows.count).ClearContents
     End If
-    
-    ' Sütun numaralarını bul
-    kodCol = wsPusula.Rows(1).Find("C. EMR Eşdeğer Ürün Grup Kodu").Column
-    adCol = wsPusula.Rows(1).Find("Adı").Column
+
+    kodCol = wsPusula.Rows(1).Find("C. EMR E�de�er �r�n Grup Kodu").Column
+    adCol = wsPusula.Rows(1).Find("Ad�").Column
     miktarCol = wsPusula.Rows(1).Find("Miktar").Column
-    
-    ' Pusula sayfasındaki kod verilerini diziye al
+
     kodData = wsPusula.Range(wsPusula.Cells(2, kodCol), wsPusula.Cells(lastRow, kodCol)).value
-    
-    ' Kod verilerini sayıya dönüştür ve ondalık olmamasını sağla
+
     For i = 1 To UBound(kodData, 1)
         If IsNumeric(kodData(i, 1)) Then
             kodData(i, 1) = Round(CDbl(kodData(i, 1)), 0)
         End If
     Next i
-    
-    ' Hesap sayfasındaki başlıkları yaz
-    wsHesap.Cells(1, 1).value = "EşdeğerKod"
-    wsHesap.Cells(1, 2).value = "Müstahzar"
+
+    wsHesap.Cells(1, 1).value = "E�de�erKod"
+    wsHesap.Cells(1, 2).value = "M�stahzar"
     wsHesap.Cells(1, 3).value = "Stok Miktar"
-    
-    ' Pusula sayfasındaki verileri Hesap sayfasına kopyala
+
     wsHesap.Range("A2:A" & lastRow).value = kodData
     wsHesap.Range("B2:B" & lastRow).value = wsPusula.Range(wsPusula.Cells(2, adCol), wsPusula.Cells(lastRow, adCol)).value
     wsHesap.Range("C2:C" & lastRow).value = wsPusula.Range(wsPusula.Cells(2, miktarCol), wsPusula.Cells(lastRow, miktarCol)).value
-    
-  
-UserForm1.ListBox.AddItem "Pusula sayfasından veri kopyalama işlemi tamamlandı."
+
+    UserForm1.ListBox.AddItem "Pusula sayfas�ndan veri kopyalama i�lemi tamamland�."
 End Sub
 
-'eşdeğerkodları üçe tamamla;
-
 Sub KopyalaVeEkleHizli()
-
-UserForm1.ListBox.AddItem "Müstahzar sayısının üçlemesi işlemi başladı."
+    UserForm1.ListBox.AddItem "M�stahzar say�s�n�n ��lemesi i�lemi ba�lad�."
     Dim ws As Worksheet
     Dim lastRow As Long
     Dim i As Long, j As Long
@@ -194,142 +172,106 @@ UserForm1.ListBox.AddItem "Müstahzar sayısının üçlemesi işlemi başladı.
     Dim result() As Variant
     Dim resultIndex As Long
     Dim esdegerKodCol As Long, mustahzarCol As Long, stokMiktarCol As Long
-    
+
     Set kodCount = CreateObject("Scripting.Dictionary")
-    
-    Application.ScreenUpdating = False ' Ekran güncellemelerini kapat
-    Application.Calculation = xlCalculationManual ' Otomatik hesaplamayı kapat
-    
-    Set ws = ThisWorkbook.Sheets("Hesap") ' Çalışma sayfasını tanımla
-    lastRow = ws.Cells(ws.Rows.count, 1).End(xlUp).row ' Son satırı bul
-    
-    ' Sütun başlıklarını bul
-    esdegerKodCol = Application.WorksheetFunction.Match("EşdeğerKod", ws.Rows(1), 0)
-    mustahzarCol = Application.WorksheetFunction.Match("Müstahzar", ws.Rows(1), 0)
+    Set ws = ThisWorkbook.Sheets("Hesap")
+    lastRow = ws.Cells(ws.Rows.count, 1).End(xlUp).row
+
+    esdegerKodCol = Application.WorksheetFunction.Match("E�de�erKod", ws.Rows(1), 0)
+    mustahzarCol = Application.WorksheetFunction.Match("M�stahzar", ws.Rows(1), 0)
     stokMiktarCol = Application.WorksheetFunction.Match("Stok Miktar", ws.Rows(1), 0)
-    
-    ' Verileri diziye al
+
     data = ws.Range(ws.Cells(2, esdegerKodCol), ws.Cells(lastRow, stokMiktarCol)).value
-    
-    ' Sonuç dizisini başlat
+
     ReDim result(1 To (lastRow - 1) * 2, 1 To UBound(data, 2))
     resultIndex = 1
-    
-    ' Eşdeğer Kodları say
+
     For i = 1 To UBound(data, 1)
-        kod = data(i, 1) ' Eşdeğer Kod sütunu
-        If kodCount.exists(kod) Then
+        kod = data(i, 1)
+        If kodCount.Exists(kod) Then
             kodCount(kod) = kodCount(kod) + 1
         Else
             kodCount.Add kod, 1
         End If
     Next i
-    
-    ' İki adet olan Eşdeğer Kodları kopyala
+
     For i = 1 To UBound(data, 1)
         kod = data(i, 1)
         If kodCount(kod) = 2 Then
-            result(resultIndex, 1) = data(i, 1) ' EşdeğerKod
-            result(resultIndex, 2) = data(i, 2) & "_kopya" & kodCount(kod) ' Müstahzar
-            result(resultIndex, 3) = data(i, 3) ' Stok Miktar
+            result(resultIndex, 1) = data(i, 1)
+            result(resultIndex, 2) = data(i, 2) & "_kopya" & kodCount(kod)
+            result(resultIndex, 3) = data(i, 3)
             resultIndex = resultIndex + 1
             kodCount(kod) = kodCount(kod) + 1
         End If
     Next i
-    
-    ' Bir adet olan Eşdeğer Kodları kopyala
+
     For i = 1 To UBound(data, 1)
         kod = data(i, 1)
         If kodCount(kod) = 1 Then
-            ' İki kopya ekle
             For j = 1 To 2
                 If kodCount(kod) < 3 Then
-                    result(resultIndex, 1) = data(i, 1) ' EşdeğerKod
-                    result(resultIndex, 2) = data(i, 2) & "_kopya" & kodCount(kod) ' Müstahzar
-                    result(resultIndex, 3) = data(i, 3) ' Stok Miktar
+                    result(resultIndex, 1) = data(i, 1)
+                    result(resultIndex, 2) = data(i, 2) & "_kopya" & kodCount(kod)
+                    result(resultIndex, 3) = data(i, 3)
                     resultIndex = resultIndex + 1
                     kodCount(kod) = kodCount(kod) + 1
                 End If
             Next j
         End If
     Next i
-    
-    ' Sonuçları çalışma sayfasına yaz
-    ws.Range(ws.Cells(lastRow + 1, esdegerKodCol), ws.Cells(lastRow + resultIndex - 1, stokMiktarCol)).value = result
-    
-    ' EşdeğerKod verilerini alfabetik olarak sıralama
-    ws.Range(ws.Cells(2, esdegerKodCol), ws.Cells(lastRow + resultIndex - 1, stokMiktarCol)).Sort Key1:=ws.Cells(2, esdegerKodCol), Order1:=xlAscending, header:=xlNo
-    
-    Application.ScreenUpdating = True ' Ekran güncellemelerini aç
-    Application.Calculation = xlCalculationAutomatic ' Otomatik hesaplamayı aç
 
-UserForm1.ListBox.AddItem "Müstahzar sayısının üçlemesi işlemi tamamlandı."
+    ws.Range(ws.Cells(lastRow + 1, esdegerKodCol), ws.Cells(lastRow + resultIndex - 1, stokMiktarCol)).value = result
+    ws.Range(ws.Cells(2, esdegerKodCol), ws.Cells(lastRow + resultIndex - 1, stokMiktarCol)).Sort Key1:=ws.Cells(2, esdegerKodCol), Order1:=xlAscending, header:=xlNo
+
+    UserForm1.ListBox.AddItem "M�stahzar say�s�n�n ��lemesi i�lemi tamamland�."
 End Sub
 
 Sub KutuMiktarKopyala()
-
-UserForm1.ListBox.AddItem "Kutu içi miktarlarının kpyalanması işlemi başladı."
+    UserForm1.ListBox.AddItem "Kutu i�i miktarlar�n�n kopyalanmas� i�lemi ba�lad�."
     Dim wsHesap As Worksheet
-    Dim wsKutuiçi As Worksheet
-    Dim rngHesap As Range
-    Dim rngKutuiçi As Range
-    Dim cell As Range
-    Dim matchRow As Variant
-    Dim colEsdegerKodHesap As Long
-    Dim colKutuMiktarHesap As Long
-    Dim colEsdegerKodKutuiçi As Long
-    Dim colKutuIciKutuiçi As Long
+    Dim wsKutui�i As Worksheet
     Dim hesapData As Variant
     Dim kutuiciData As Variant
     Dim i As Long
     Dim dict As Object
-    
-    ' Sayfaları tanımla
+
     Set wsHesap = ThisWorkbook.Sheets("Hesap")
-    Set wsKutuiçi = ThisWorkbook.Sheets("Kutuiçi")
-    
-    ' Sütun başlıklarının yerini bul
-    colEsdegerKodHesap = Application.Match("EşdeğerKod", wsHesap.Rows(1), 0)
+    Set wsKutui�i = ThisWorkbook.Sheets("Kutui�i")
+
+    Dim colEsdegerKodHesap As Long
+    Dim colKutuMiktarHesap As Long
+    Dim colEsdegerKodKutui�i As Long
+    Dim colKutuIciKutui�i As Long
+
+    colEsdegerKodHesap = Application.Match("E�de�erKod", wsHesap.Rows(1), 0)
     colKutuMiktarHesap = Application.Match("Kutu Miktar", wsHesap.Rows(1), 0)
-    colEsdegerKodKutuiçi = Application.Match("Eşdeğer", wsKutuiçi.Rows(1), 0)
-    colKutuIciKutuiçi = Application.Match("Kutu İçi", wsKutuiçi.Rows(1), 0)
-    
-    ' Verileri diziye al
+    colEsdegerKodKutui�i = Application.Match("E�de�er", wsKutui�i.Rows(1), 0)
+    colKutuIciKutui�i = Application.Match("Kutu ��i", wsKutui�i.Rows(1), 0)
+
     hesapData = wsHesap.Range(wsHesap.Cells(2, colEsdegerKodHesap), wsHesap.Cells(wsHesap.Rows.count, colEsdegerKodHesap).End(xlUp)).Resize(, colKutuMiktarHesap - colEsdegerKodHesap + 1).value
-    kutuiciData = wsKutuiçi.Range(wsKutuiçi.Cells(2, colEsdegerKodKutuiçi), wsKutuiçi.Cells(wsKutuiçi.Rows.count, colEsdegerKodKutuiçi).End(xlUp)).Resize(, colKutuIciKutuiçi - colEsdegerKodKutuiçi + 1).value
-    
-    ' Eşdeğer kodları ve kutu içi miktarlarını bir sözlükte sakla
+    kutuiciData = wsKutui�i.Range(wsKutui�i.Cells(2, colEsdegerKodKutui�i), wsKutui�i.Cells(wsKutui�i.Rows.count, colEsdegerKodKutui�i).End(xlUp)).Resize(, colKutuIciKutui�i - colEsdegerKodKutui�i + 1).value
+
     Set dict = CreateObject("Scripting.Dictionary")
     For i = 1 To UBound(kutuiciData, 1)
         dict(kutuiciData(i, 1)) = kutuiciData(i, 2)
     Next i
-    
-    ' Ekran güncellemelerini ve hesaplamaları kapat
-    Application.ScreenUpdating = False
-    Application.Calculation = xlCalculationManual
-    
-    ' Hesap sayfasındaki her bir EşdeğerKod için
+
     For i = 1 To UBound(hesapData, 1)
-        If dict.exists(hesapData(i, 1)) Then
+        If dict.Exists(hesapData(i, 1)) Then
             hesapData(i, colKutuMiktarHesap - colEsdegerKodHesap + 1) = dict(hesapData(i, 1))
         Else
             hesapData(i, colKutuMiktarHesap - colEsdegerKodHesap + 1) = 1
         End If
     Next i
-    
-    ' Sonuçları çalışma sayfasına yaz
+
     wsHesap.Range(wsHesap.Cells(2, colEsdegerKodHesap), wsHesap.Cells(UBound(hesapData, 1) + 1, colKutuMiktarHesap)).value = hesapData
-    
-    ' Ekran güncellemelerini ve hesaplamaları aç
-    Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
 
-UserForm1.ListBox.AddItem "Kutu içi miktarlarının kopyalanması işlemi tamamlandı."
+    UserForm1.ListBox.AddItem "Kutu i�i miktarlar�n�n kopyalanmas� i�lemi tamamland�."
 End Sub
-Sub EsdegerToplam()
 
-UserForm1.ListBox.AddItem "Stok hesaplama işlemleri başladı."
-    
+Sub EsdegerToplam()
+    UserForm1.ListBox.AddItem "Stok hesaplama i�lemleri ba�lad�."
     Dim wsHesap As Worksheet
     Dim wsPusula As Worksheet
     Dim hesesdegerkodverisi As Range
@@ -349,33 +291,28 @@ UserForm1.ListBox.AddItem "Stok hesaplama işlemleri başladı."
     Dim miktar As Double
     Dim krimiktoplam As Double
     Dim maxmiktartoplam As Double
-    
-    ' Sayfaları tanımla
+
     Set wsHesap = ThisWorkbook.Sheets("Hesap")
     Set wsPusula = ThisWorkbook.Sheets("Pusula")
-    
-    ' Hesap sayfasındaki sütunları bul
-    Set hesesdegerkodverisi = wsHesap.Rows(1).Find("EşdeğerKod")
+
+    Set hesesdegerkodverisi = wsHesap.Rows(1).Find("E�de�erKod")
     Set heskutumiktarverisi = wsHesap.Rows(1).Find("Kutu Miktar")
-    Set hesesdmiktoplam = wsHesap.Rows(1).Find("Eşd.Mik. TOPLAM")
+    Set hesesdmiktoplam = wsHesap.Rows(1).Find("E�d.Mik. TOPLAM")
     Set heskrimiktoplam = wsHesap.Rows(1).Find("Kri.Mik. TOPLAM")
     Set hesmaxmiktartoplam = wsHesap.Rows(1).Find("Max.Mik TOPLAM")
-    Set hesgopithmik = wsHesap.Rows(1).Find("İht. Mik.")
-    
-    ' Pusula sayfasındaki sütunları bul
-    Set pusesdegerkodverisi = wsPusula.Rows(1).Find("C. EMR Eşdeğer Ürün Grup Kodu")
+    Set hesgopithmik = wsHesap.Rows(1).Find("�ht. Mik.")
+
+    Set pusesdegerkodverisi = wsPusula.Rows(1).Find("C. EMR E�de�er �r�n Grup Kodu")
     Set pusmikverisi = wsPusula.Rows(1).Find("Miktar")
     Set puskrimikverisi = wsPusula.Rows(1).Find("Kritik Miktar")
     Set pusmaxmikverisi = wsPusula.Rows(1).Find("Max Miktar")
-    
-    ' Hesap sayfasındaki her bir EşdeğerKod icin işlemleri yap
+
     For Each cell In wsHesap.Range(hesesdegerkodverisi.Offset(1, 0), wsHesap.Cells(wsHesap.Rows.count, hesesdegerkodverisi.Column).End(xlUp))
         kod = Trim(UCase(cell.value))
         toplam = 0
         krimiktoplam = 0
         maxmiktartoplam = 0
-        
-        ' Pusula sayfasında eşleşen kodları bul ve miktarları topla
+
         For Each pCell In wsPusula.Range(pusesdegerkodverisi.Offset(1, 0), wsPusula.Cells(wsPusula.Rows.count, pusesdegerkodverisi.Column).End(xlUp))
             If Trim(UCase(pCell.value)) = kod Then
                 toplam = toplam + CDbl(pCell.Offset(0, pusmikverisi.Column - pusesdegerkodverisi.Column).value)
@@ -383,8 +320,7 @@ UserForm1.ListBox.AddItem "Stok hesaplama işlemleri başladı."
                 maxmiktartoplam = maxmiktartoplam + CDbl(pCell.Offset(0, pusmaxmikverisi.Column - pusesdegerkodverisi.Column).value)
             End If
         Next pCell
-        
-        ' Toplamı Kutu Miktar'a böl ve sonucu ilgili sütunlara yaz
+
         miktar = CDbl(cell.Offset(0, heskutumiktarverisi.Column - hesesdegerkodverisi.Column).value)
         If miktar <> 0 Then
             cell.Offset(0, hesesdmiktoplam.Column - hesesdegerkodverisi.Column).value = Round(toplam / miktar, 0)
@@ -395,21 +331,19 @@ UserForm1.ListBox.AddItem "Stok hesaplama işlemleri başladı."
             cell.Offset(0, heskrimiktoplam.Column - hesesdegerkodverisi.Column).value = 0
             cell.Offset(0, hesmaxmiktartoplam.Column - hesesdegerkodverisi.Column).value = 0
         End If
-        
-        ' İht. Mik. sütununu hesapla
+
         If cell.Offset(0, hesesdmiktoplam.Column - hesesdegerkodverisi.Column).value < cell.Offset(0, heskrimiktoplam.Column - hesesdegerkodverisi.Column).value Then
             cell.Offset(0, hesgopithmik.Column - hesesdegerkodverisi.Column).value = Round(cell.Offset(0, hesmaxmiktartoplam.Column - hesesdegerkodverisi.Column).value - cell.Offset(0, hesesdmiktoplam.Column - hesesdegerkodverisi.Column).value, 0)
         Else
             cell.Offset(0, hesgopithmik.Column - hesesdegerkodverisi.Column).value = "Pass"
         End If
     Next cell
-    
-UserForm1.ListBox.AddItem "Stok hesaplama işlemleri tamamlandı."
-End Sub
-'Data sayfası ihtyiaç miktarları sıralaması, istediğim gibi değil ama sanırım iş görür
-Sub DinamikSirala()
 
-UserForm1.ListBox.AddItem "İhtiyaç fazlası sıralama işlemleri başladı."
+    UserForm1.ListBox.AddItem "Stok hesaplama i�lemleri tamamland�."
+End Sub
+'Data sayfas� ihtyia� miktarlar� s�ralamas�, istedi�im gibi de�il ama san�r�m i� g�r�r
+Sub DinamikSirala()
+    UserForm1.ListBox.AddItem "�htiya� fazlas� s�ralama i�lemleri ba�lad�."
     Dim ws As Worksheet
     Dim esdegerCol As Long
     Dim ihtiyacCol As Long
@@ -417,25 +351,17 @@ UserForm1.ListBox.AddItem "İhtiyaç fazlası sıralama işlemleri başladı."
     Dim headerRow As Long
     Dim cell As Range
 
-    ' Çalışma sayfasını belirle
-    Set ws = ThisWorkbook.Sheets("Data") ' Sayfa adını ihtiyacınıza göre değiştirin
-
-    ' Başlık satırını belirle
-    headerRow = 1 ' Başlık satırının numarasını ihtiyacınıza göre değiştirin
-
-    ' "Eşdeğer" ve "İhtiyaç" sütunlarını bul
+    Set ws = ThisWorkbook.Sheets("Data")
+    headerRow = 1
     For Each cell In ws.Rows(headerRow).Cells
-        If cell.value = "Eşdeğer" Then
+        If cell.value = "E�de�er" Then
             esdegerCol = cell.Column
-        ElseIf cell.value = "İhtiyaç" Then
+        ElseIf cell.value = "�htiya�" Then
             ihtiyacCol = cell.Column
         End If
     Next cell
 
-    ' Son satırı bul
     lastRow = ws.Cells(ws.Rows.count, esdegerCol).End(xlUp).row
-
-    ' Sıralama işlemi
     ws.Sort.SortFields.Clear
     ws.Sort.SortFields.Add key:=ws.Cells(headerRow + 1, ihtiyacCol), Order:=xlAscending
     ws.Sort.SortFields.Add key:=ws.Cells(headerRow + 1, esdegerCol), Order:=xlAscending
@@ -445,18 +371,15 @@ UserForm1.ListBox.AddItem "İhtiyaç fazlası sıralama işlemleri başladı."
         .Apply
     End With
 
-UserForm1.ListBox.AddItem "İhtiyaç fazlası sıralama işlemleri tamamlandı."
+    UserForm1.ListBox.AddItem "�htiya� fazlas� s�ralama i�lemleri tamamland�."
 End Sub
 
-'ihtyiaç fazlası hastaneleri kopyalama
 Sub KopyalaHastaneleri()
-
-UserForm1.ListBox.AddItem "İhtiyaç fazlası bulunan hastane tespiti işlemleri başladı."
-    ' Optimizasyonları kapat
+    UserForm1.ListBox.AddItem "�htiya� fazlas� bulunan hastane tespiti i�lemleri ba�lad�."
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
     Application.EnableEvents = False
-    
+
     Dim wsData As Worksheet
     Dim wsHesap As Worksheet
     Dim i As Long, j As Long, k As Long
@@ -468,56 +391,46 @@ UserForm1.ListBox.AddItem "İhtiyaç fazlası bulunan hastane tespiti işlemleri
     Dim ihtiyacList As Collection
     Dim ihtiyacDict As Object
     Dim ihtiyacArray() As Variant
-    
+
     Set wsData = ThisWorkbook.Sheets("Data")
     Set wsHesap = ThisWorkbook.Sheets("Hesap")
     Set ihtiyacDict = CreateObject("Scripting.Dictionary")
-    
-    ' Hesap sayfasındaki sütun başlıklarını bul
-    esdegerKodCol = Application.WorksheetFunction.Match("EşdeğerKod", wsHesap.Rows(1), 0)
-    gopIhtMikCol = Application.WorksheetFunction.Match("İht. Mik.", wsHesap.Rows(1), 0)
-    ihtFazHastAdCol = Application.WorksheetFunction.Match("İht. Faz. Hast AD", wsHesap.Rows(1), 0)
-    ihtFazMiktarCol = Application.WorksheetFunction.Match("İht. Faz. Miktar", wsHesap.Rows(1), 0)
-    
-    ' Data sayfasındaki sütun başlıklarını bul
+
+    esdegerKodCol = Application.WorksheetFunction.Match("E�de�erKod", wsHesap.Rows(1), 0)
+    gopIhtMikCol = Application.WorksheetFunction.Match("�ht. Mik.", wsHesap.Rows(1), 0)
+    ihtFazHastAdCol = Application.WorksheetFunction.Match("�ht. Faz. Hast AD", wsHesap.Rows(1), 0)
+    ihtFazMiktarCol = Application.WorksheetFunction.Match("�ht. Faz. Miktar", wsHesap.Rows(1), 0)
     hastaneAdiCol = Application.WorksheetFunction.Match("Hastane", wsData.Rows(1), 0)
-    esdegerCol = Application.WorksheetFunction.Match("Eşdeğer", wsData.Rows(1), 0)
-    ihtiyacCol = Application.WorksheetFunction.Match("İhtiyaç", wsData.Rows(1), 0)
-    
+    esdegerCol = Application.WorksheetFunction.Match("E�de�er", wsData.Rows(1), 0)
+    ihtiyacCol = Application.WorksheetFunction.Match("�htiya�", wsData.Rows(1), 0)
     lastRow = wsData.Cells(wsData.Rows.count, esdegerCol).End(xlUp).row
-    
-    ' Data sayfasındaki her bir EşdeğerKod icin İhtiyaç ve Hastane Adı bilgilerini topla
+
     For ihtiyacRow = 2 To lastRow
         esdegerKod = wsData.Cells(ihtiyacRow, esdegerCol).value
-        If Not ihtiyacDict.exists(esdegerKod) Then
+        If Not ihtiyacDict.Exists(esdegerKod) Then
             Set ihtiyacDict(esdegerKod) = New Collection
         End If
         ihtiyacDict(esdegerKod).Add Array(wsData.Cells(ihtiyacRow, ihtiyacCol).value, wsData.Cells(ihtiyacRow, hastaneAdiCol).value)
     Next ihtiyacRow
-    
-    ' Hesap sayfasındaki her bir EşdeğerKod icin işlemleri yap
+
     For i = 2 To wsHesap.Cells(wsHesap.Rows.count, esdegerKodCol).End(xlUp).row
         If wsHesap.Cells(i, gopIhtMikCol).value <> "Pass" Then
             esdegerKod = wsHesap.Cells(i, esdegerKodCol).value
-            If ihtiyacDict.exists(esdegerKod) Then
+            If ihtiyacDict.Exists(esdegerKod) Then
                 Set ihtiyacList = ihtiyacDict(esdegerKod)
-                ' İhtiyaç miktarlarına göre küçükten büyüğe sırala
                 ihtiyacArray = CollectionToArray(ihtiyacList)
                 Call QuickSort(ihtiyacArray, LBound(ihtiyacArray, 2), UBound(ihtiyacArray, 2))
-                
-                ' İlk üç hastane ve ihtiyaç miktarını alt alta kopyala
+
                 For j = 1 To Application.Min(3, UBound(ihtiyacArray, 2))
                     wsHesap.Cells(i, ihtFazMiktarCol).value = Round(ihtiyacArray(1, j), 0)
                     wsHesap.Cells(i, ihtFazHastAdCol).value = ihtiyacArray(2, j)
                     i = i + 1
                 Next j
-                ' Diğer satırları boş bırak
                 For k = j To 3
                     wsHesap.Cells(i, ihtFazMiktarCol).value = ""
                     wsHesap.Cells(i, ihtFazHastAdCol).value = ""
                     i = i + 1
                 Next k
-                ' Aynı EşdeğerKod icin kopyalamayı durdur
                 Do While wsHesap.Cells(i, esdegerKodCol).value = esdegerKod
                     wsHesap.Cells(i, ihtFazMiktarCol).value = ""
                     wsHesap.Cells(i, ihtFazHastAdCol).value = ""
@@ -527,14 +440,12 @@ UserForm1.ListBox.AddItem "İhtiyaç fazlası bulunan hastane tespiti işlemleri
             End If
         End If
     Next i
-    
-    ' Optimizasyonları aç
+
     Application.ScreenUpdating = True
     Application.Calculation = xlCalculationAutomatic
     Application.EnableEvents = True
-    
-    
-UserForm1.ListBox.AddItem "İhtiyaç fazlası bulunan hastane tespiti işlemleri tamamlandı."
+
+    UserForm1.ListBox.AddItem "�htiya� fazlas� bulunan hastane tespiti i�lemleri tamamland�."
 End Sub
 
 Function CollectionToArray(col As Collection) As Variant
@@ -584,8 +495,7 @@ Function IsInCollection(col As Collection, value As Variant) As Boolean
 End Function
 
 Sub UpdateDepoDurumu()
-
-UserForm1.ListBox.AddItem "Tedarikçi ecza deposu tespiti işlemleri başladı."
+    UserForm1.ListBox.AddItem "Tedarik�i ecza deposu tespiti i�lemleri ba�lad�."
     Dim wsHesap As Worksheet
     Dim wsAnlMuad As Worksheet
     Dim lastRowHesap As Long
@@ -603,39 +513,31 @@ UserForm1.ListBox.AddItem "Tedarikçi ecza deposu tespiti işlemleri başladı."
     Dim tedarikci As String
     Dim aciklama As String
     Dim esdegerCount As Object
-    
-    ' Çalışma sayfalarını tanımla
+
     Set wsHesap = ThisWorkbook.Sheets("Hesap")
     Set wsAnlMuad = ThisWorkbook.Sheets("AnlMuad")
-    
-    ' Son satırları bul
+
     lastRowHesap = wsHesap.Cells(wsHesap.Rows.count, 1).End(xlUp).row
     lastRowAnlMuad = wsAnlMuad.Cells(wsAnlMuad.Rows.count, 1).End(xlUp).row
-    
-    ' Sütun başlıklarının yerlerini bul
-    ihtMikCol = wsHesap.Rows(1).Find("İht. Mik.").Column
-    esdegerKodCol = wsHesap.Rows(1).Find("EşdeğerKod").Column
-    depoDurumuCol = wsHesap.Rows(1).Find("Depo Adı & Durumu").Column
-    esdegerCol = wsAnlMuad.Rows(1).Find("Eşdeğer").Column
-    tedarikciCol = wsAnlMuad.Rows(1).Find("Tedarikçi").Column
-    aciklamaCol = wsAnlMuad.Rows(1).Find("Açıklama").Column
-    
-    ' Eşdeğer kodlarının sayısını takip etmek için Scripting.Dictionary kullan
+
+    ihtMikCol = wsHesap.Rows(1).Find("�ht. Mik.").Column
+    esdegerKodCol = wsHesap.Rows(1).Find("E�de�erKod").Column
+    depoDurumuCol = wsHesap.Rows(1).Find("Depo Ad� & Durumu").Column
+    esdegerCol = wsAnlMuad.Rows(1).Find("E�de�er").Column
+    tedarikciCol = wsAnlMuad.Rows(1).Find("Tedarik�i").Column
+    aciklamaCol = wsAnlMuad.Rows(1).Find("A��klama").Column
+
     Set esdegerCount = CreateObject("Scripting.Dictionary")
-    
-    ' Hesap sayfasında döngü
     For i = 2 To lastRowHesap
         ihtMik = wsHesap.Cells(i, ihtMikCol).value
         If ihtMik <> "Pass" Then
             esdegerKod = wsHesap.Cells(i, esdegerKodCol).value
-            ' Eşdeğer kodunun sayısını artır
-            If Not esdegerCount.exists(esdegerKod) Then
+            If Not esdegerCount.Exists(esdegerKod) Then
                 esdegerCount(esdegerKod) = 1
             Else
                 esdegerCount(esdegerKod) = esdegerCount(esdegerKod) + 1
             End If
-            
-            ' AnlMuad sayfasında eşdeğer kodu ara
+
             Dim foundCount As Long
             foundCount = 0
             For j = 2 To lastRowAnlMuad
@@ -644,7 +546,6 @@ UserForm1.ListBox.AddItem "Tedarikçi ecza deposu tespiti işlemleri başladı."
                     If foundCount = esdegerCount(esdegerKod) Then
                         tedarikci = wsAnlMuad.Cells(j, tedarikciCol).value
                         aciklama = wsAnlMuad.Cells(j, aciklamaCol).value
-                        ' Tedarikçi ve Açıklama bilgilerini birleştir ve yaz
                         wsHesap.Cells(i, depoDurumuCol).value = aciklama & " - " & tedarikci
                         Exit For
                     End If
@@ -652,8 +553,8 @@ UserForm1.ListBox.AddItem "Tedarikçi ecza deposu tespiti işlemleri başladı."
             Next j
         End If
     Next i
-    
-UserForm1.ListBox.AddItem "Tedarikçi ecza deposu tespiti işlemleri tamamlandı."
+
+    UserForm1.ListBox.AddItem "Tedarik�i ecza deposu tespiti i�lemleri tamamland�."
 End Sub
 
 Sub PivotTabloyuYenile()
@@ -661,20 +562,16 @@ Sub PivotTabloyuYenile()
     Dim wsDepo As Worksheet
     Dim ptHastane As PivotTable
     Dim ptDepo As PivotTable
-    
-    ' PVT sayfasındaki pivot tabloyu tanımlayın
+
     Set wsPVT = ThisWorkbook.Sheets("PVT")
-    Set ptHastane = wsPVT.PivotTables("hastanepvt") ' Pivot tablo adını buraya yazın
-    
-    ' Yeni sayfadaki pivot tabloyu tanımlayın
-    Set wsDepo = ThisWorkbook.Sheets("depo") ' Yeni sayfanızın adını buraya yazın
-    Set ptDepo = wsDepo.PivotTables("depopvt") ' Yeni pivot tablo adını buraya yazın
-    
-    ' Pivot tabloları yenileyin
-    UserForm1.ListBox.AddItem "Pivot tablo güncellemeleri başladı."
+    Set ptHastane = wsPVT.PivotTables("hastanepvt")
+    Set wsDepo = ThisWorkbook.Sheets("depo")
+    Set ptDepo = wsDepo.PivotTables("depopvt")
+
+    UserForm1.ListBox.AddItem "Pivot tablo g�ncellemeleri ba�lad�."
     ptHastane.RefreshTable
     ptDepo.RefreshTable
-    UserForm1.ListBox.AddItem "Pivot tablo güncellemeleri tamamlandı."
+    UserForm1.ListBox.AddItem "Pivot tablo g�ncellemeleri tamamland�."
 End Sub
 
 Sub SendEmail()
@@ -694,126 +591,98 @@ Sub SendEmail()
     Dim searchRange As Range
     Dim foundCell As Range
     Dim firstAddress As String
-    Dim count As Integer
-    
-    ' Outlook uygulamasını başlat
+
     Set OutlookApp = CreateObject("Outlook.Application")
-    
-    ' Çalışma sayfasını belirle
-    Set ws = ThisWorkbook.Sheets("PVT") ' Pivot tablonun bulunduğu sayfa adı
-    Set wsOrg = ThisWorkbook.Sheets("Org") ' Org sayfası
-    
-    ' E sütunundaki son dolu satırı bul
+    Set ws = ThisWorkbook.Sheets("PVT")
+    Set wsOrg = ThisWorkbook.Sheets("Org")
     lastRow = ws.Cells(ws.Rows.count, "E").End(xlUp).row
-    
-    ' Dinamik veri aralığını belirle
     Set rng = ws.Range("C2:I" & lastRow)
-    
-' C sütununu geçici olarak görünür yap
-ws.Columns("C").Hidden = False
 
-' Hastane adını C3 hücresinden başlayarak tüm C sütununda ara
-Set searchRange = ws.Range("C3:C" & ws.Cells(ws.Rows.count, "C").End(xlUp).row)
-hospitalName = ws.Range("C3").value
+    ws.Columns("C").Hidden = False
+    Set searchRange = ws.Range("C3:C" & ws.Cells(ws.Rows.count, "C").End(xlUp).row)
+    hospitalName = ws.Range("C3").value
 
-' C sütununda farklı hastane adları olup olmadığını kontrol et
-Dim cell As Range
-For Each cell In searchRange
-    If cell.value <> "" And cell.value <> hospitalName Then
-        MsgBox "İhtiyaç fazlası ilaçları içeren hastaneler sütununda farklı hastane adları tespit edildi." & vbCrLf & "Lütfen her işlemde yalnızca bir hastane seçiniz.", vbExclamation
-        ws.Columns("C").Hidden = True
-        Exit Sub
-    End If
-Next cell
+    Dim cell As Range
+    For Each cell In searchRange
+        If cell.value <> "" And cell.value <> hospitalName Then
+            MsgBox "�htiya� fazlas� ila�lar� i�eren hastaneler s�tununda farkl� hastane adlar� tespit edildi." & vbCrLf & "L�tfen her i�lemde yaln�zca bir hastane se�iniz.", vbExclamation
+            ws.Columns("C").Hidden = True
+            Exit Sub
+        End If
+    Next cell
 
-' C sütununu tekrar gizle
-ws.Columns("C").Hidden = True
-  
-    ' Kısaltma sayfasında hastane adını bul
+    ws.Columns("C").Hidden = True
     Set findRow = wsOrg.Columns("B").Find(What:=hospitalName, LookIn:=xlValues, LookAt:=xlWhole)
-    
+
     If Not findRow Is Nothing Then
-        ' Eczacının adını ve e-posta adresini al
         pharmacistName = findRow.Offset(0, 1).value
         emailAddress = findRow.Offset(0, 2).value
-        
-        ' E-posta adresi boş değilse e-posta oluştur
+
         If emailAddress <> "" Then
-            ' E-posta oluştur ve taslak olarak kaydet
             Set OutlookMail = OutlookApp.CreateItem(0)
             With OutlookMail
                 .To = emailAddress
                 .Cc = "umit.yazir@mlpcare.com;ceyda.simsek@mlpcare.com"
-                .Subject = "İlaç İhtiyaç Fazlası Talebi Hk."
-                .Display ' E-postayı taslak olarak aç
-                
-                ' Gönderen e-posta adresini al
+                .Subject = "�la� �htiya� Fazlas� Talebi Hk."
+                .Display
+
                 senderEmail = .Session.Accounts.Item(1).SmtpAddress
-                
-                ' Gönderen e-posta adresini Org sayfasında bul ve hastane adını al
                 Set findRow = wsOrg.Columns("D").Find(What:=senderEmail, LookIn:=xlValues, LookAt:=xlWhole)
                 If Not findRow Is Nothing Then
                     senderHospitalName = findRow.Offset(0, -2).value
                 Else
                     senderHospitalName = "Bilinmiyor"
                 End If
-                
-                ' Veri aralığını HTML formatında oluştur
+
                 Dim dataContent As String
                 dataContent = "<table border='1' style='border-collapse:collapse;'>"
-dataContent = dataContent & "<tr><td colspan='4' style='font-weight:bold; background-color:lightblue; text-align:center;'>" & hospitalName & "</td><td colspan='3' style='font-weight:bold; background-color:lightgreen; text-align:center;'>" & senderHospitalName & "</td><td colspan='2' style='font-weight:bold; background-color:lightblue; text-align:center;'>" & hospitalName & " tarafından karşılanacak miktarlar ve varsa Açıklamalar</td></tr>"
-For Each cell In rng.Rows
-    dataContent = dataContent & "<tr>"
-    For Each dataCell In cell.Cells
-        If cell.row = 1 Or cell.row = 2 Then
-            If dataCell.Column = 7 Or dataCell.Column = 8 Or dataCell.Column = 9 Then
-                dataContent = dataContent & "<td style='font-weight:bold; background-color:lightgreen; word-wrap:break-word; text-align:center;'>" & dataCell.value & "</td>"
-            Else
-                dataContent = dataContent & "<td style='font-weight:bold; background-color:lightblue; word-wrap:break-word; text-align:center;'>" & dataCell.value & "</td>"
-            End If
-        ElseIf dataCell.Column = 6 Then
-            dataContent = dataContent & "<td style='word-wrap:break-word; width:1.8cm; text-align:right; background-color:" & IIf(cell.row Mod 2 = 0, "lightblue;", "white;") & "'>" & dataCell.value & "</td>"
-        ElseIf dataCell.Column = 7 Or dataCell.Column = 8 Then
-            dataContent = dataContent & "<td style='word-wrap:break-word; width:1.8cm; text-align:right; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'>" & dataCell.value & "</td>"
-        ElseIf dataCell.Column = 9 Then
-            dataContent = dataContent & "<td style='word-wrap:break-word; width:1.8cm; text-align:right; background-color:" & IIf(cell.row Mod 2 = 0, "lightgreen;", "white;") & "'>" & dataCell.value & "</td>"
-        Else
-            dataContent = dataContent & "<td style='word-wrap:break-word; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'>" & dataCell.value & "</td>"
-        End If
-    Next dataCell
-    If cell.row = 2 Then
-    dataContent = dataContent & "<td style='word-wrap:break-word; width:1.6cm; font-weight:bold; text-align:center;background-color:" & IIf(cell.row Mod 2 = 0, "lightblue;", "white;") & "'>Karş. Miktar (Kt)</td>" ' Karş. Miktar (Kt) sütunu
-    dataContent = dataContent & "<td style='word-wrap:break-word; width:5cm; font-weight:bold; text-align:center;background-color:" & IIf(cell.row Mod 2 = 0, "lightblue;", "white;") & "'>Açıklamalar</td>" ' Açıklamalar sütunu
-Else
-    dataContent = dataContent & "<td style='word-wrap:break-word; width:1.6cm; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'></td>" ' Karş. Miktar (Kt) sütunu
-    dataContent = dataContent & "<td style='word-wrap:break-word; width:5cm; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'></td>" ' Açıklamalar sütunu
-End If
+                dataContent = dataContent & "<tr><td colspan='4' style='font-weight:bold; background-color:lightblue; text-align:center;'>" & hospitalName & "</td><td colspan='3' style='font-weight:bold; background-color:lightblue; text-align:center;'>" & senderHospitalName & "</td></tr>"
+                For Each cell In rng.Rows
+                    dataContent = dataContent & "<tr>"
+                    For Each dataCell In cell.Cells
+                        If cell.row = 1 Or cell.row = 2 Then
+                            If dataCell.Column = 7 Or dataCell.Column = 8 Or dataCell.Column = 9 Then
+                                dataContent = dataContent & "<td style='font-weight:bold; background-color:lightgreen; word-wrap:break-word; text-align:center;'>" & dataCell.value & "</td>"
+                            Else
+                                dataContent = dataContent & "<td style='font-weight:bold; background-color:lightblue; word-wrap:break-word; text-align:center;'>" & dataCell.value & "</td>"
+                            End If
+                        ElseIf dataCell.Column = 6 Then
+                            dataContent = dataContent & "<td style='word-wrap:break-word; width:1.8cm; text-align:right; background-color:" & IIf(cell.row Mod 2 = 0, "lightblue;", "white;") & "'>" & dataCell.value & "</td>"
+                        ElseIf dataCell.Column = 7 Or dataCell.Column = 8 Then
+                            dataContent = dataContent & "<td style='word-wrap:break-word; width:1.8cm; text-align:right; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'>" & dataCell.value & "</td>"
+                        ElseIf dataCell.Column = 9 Then
+                            dataContent = dataContent & "<td style='word-wrap:break-word; width:1.8cm; text-align:right; background-color:" & IIf(cell.row Mod 2 = 0, "lightgreen;", "white;") & "'>" & dataCell.value & "</td>"
+                        Else
+                            dataContent = dataContent & "<td style='word-wrap:break-word; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'>" & dataCell.value & "</td>"
+                        End If
+                    Next dataCell
+                    If cell.row = 2 Then
+                        dataContent = dataContent & "<td style='word-wrap:break-word; width:1.6cm; font-weight:bold; text-align:center;background-color:" & IIf(cell.row Mod 2 = 0, "lightblue;", "white;") & "'>Kar�. Miktar (Kt)</td>"
+                        dataContent = dataContent & "<td style='word-wrap:break-word; width:5cm; font-weight:bold; text-align:center;background-color:" & IIf(cell.row Mod 2 = 0, "lightblue;", "white;") & "'>A��klamalar</td>"
+                    Else
+                        dataContent = dataContent & "<td style='word-wrap:break-word; width:1.6cm; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'></td>"
+                        dataContent = dataContent & "<td style='word-wrap:break-word; width:5cm; background-color:" & IIf(cell.row Mod 2 = 0, "lightgrey;", "white;") & "'></td>"
+                    End If
+                    dataContent = dataContent & "</tr>"
+                Next cell
+                dataContent = dataContent & "</table>"
 
-    dataContent = dataContent & "</tr>"
-Next cell
-dataContent = dataContent & "</table>"
-
-
-                
-                ' E-posta içeriğini oluştur
                 emailBody = "<span style='font-size:12pt; font-family:Times New Roman;'>" & _
                             "Merhaba " & pharmacistName & "," & "<br><br>" & _
-                            "Aşağıdaki tabloda sizin ihtiyaç fazlanız bizimse ihtiyaç duyduğumuz ilaçların listesi ve ihtiyaç miktarlarımız görünmektedir." & "<br>" & _
-                            "Mümkünse ihtiyacımız kadar değilse sizin uygun gördüğünüz miktarlarda yardımcı olmanızı rica ediyoruz." & "<br><br>" & _
-                            "Teşekkürler, iyi çalışmalar." & "<br><br>" & _
+                            "A�a��daki tabloda sizin ihtiya� fazlan�z bizimse ihtiya� duydu�umuz ila�lar�n listesi ve ihtiya� miktarlar�m�z g�r�nmektedir." & "<br>" & _
+                            "M�mk�nse ihtiyac�m�z kadar de�ilse sizin uygun g�rd���n�z miktarlarda yard�mc� olman�z� rica ediyoruz." & "<br><br>" & _
+                            "Te�ekk�rler, iyi �al��malar." & "<br><br>" & _
                             dataContent & "<br><br>" & _
-                            "* Bu mail Satın Alma Çalışması Beta 5.1 tarafından otomatik olarak oluşturulmuştur. Yanlışlık olduğunu düşünüyorsanız lütfen Ecz. Harun Topal ile iletişime geçiniz." & _
+                            "* Bu mail Sat�n Alma �al��mas� Beta 5.1 taraf�ndan otomatik olarak olu�turulmu�tur. Yanl��l�k oldu�unu d���n�yorsan�z l�tfen Ecz. Harun Topal ile ileti�ime ge�iniz." & _
                             "</span>"
-                
-                .HTMLBody = emailBody & "<br><br>" & .HTMLBody ' Varsayılan imzayı eklemek için mevcut HTMLBody'yi ekle
+
+                .HTMLBody = emailBody & "<br><br>" & .HTMLBody
             End With
         End If
     End If
-    
-    ' Temizlik
+
     Set OutlookMail = Nothing
     Set OutlookApp = Nothing
 End Sub
-
 
 
